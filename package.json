@@ -17,16 +17,19 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.33",
-    "tsx": "^4.7.1",
-    "typescript": "^5.8.3",
-    "ts-node": "^10.9.1",
-    "eslint": "^8.49.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
-    "@typescript-eslint/eslint-plugin": "^6.13.0"
+    "eslint": "^8.49.0",
+    "ts-node": "^10.9.1",
+    "tsx": "^4.7.1",
+    "typescript": "^5.8.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
-    ]
+    ],
+    "overrides": {
+      "ajv@<8.18.0": ">=8.18.0"
+    }
   }
 }
