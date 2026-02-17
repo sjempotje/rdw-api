@@ -63,11 +63,13 @@ testRdwClient(rdw).then((isConnected: boolean) => {
   serve(
     {
       fetch: app.fetch,
+      hostname: process.env.HOST || '0.0.0.0',
       port,
     },
     (info) => {
-      console.log(`RDW API server is running on http://localhost:${info.port}`)
-      console.log(`Health check: http://localhost:${info.port}/health`)
+      const hostname = process.env.HOST || '0.0.0.0'
+      console.log(`RDW API server is running on http://${hostname}:${info.port}`)
+      console.log(`Health check: http://${hostname}:${info.port}/health`)
     }
   )
 })
