@@ -9,7 +9,15 @@ import {
   rdwMiddleware,
   corsMiddleware,
 } from './middlewares.js'
-import { handleRoot, handleKentekenLookup, handleHealthCheck, handleKentekenAxles, handleKentekenFuel, handleKentekenBody, handleKentekenVehicleClass } from './handlers.js'
+import {
+  handleRoot,
+  handleKentekenLookup,
+  handleHealthCheck,
+  handleKentekenAxles,
+  handleKentekenFuel,
+  handleKentekenBody,
+  handleKentekenVehicleClass,
+} from './handlers.js'
 
 const cfg = getConfig()
 const app = new Hono()

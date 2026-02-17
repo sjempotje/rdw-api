@@ -1,5 +1,5 @@
 import type { Context } from 'hono'
-import type { ApiResponse, VehicleData, RdwClient } from './types.js'
+import type { ApiResponse, VehicleData } from './types.js'
 import { normalizeKenteken, isValidKenteken } from './utils.js'
 
 /**

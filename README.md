@@ -57,8 +57,8 @@ pnpm install
   - Docker Hub: `docker.io/lucaem/rdw-api`
 
 - Required repository secrets (for Docker Hub push):
-  - `DOCKERHUB_USERNAME` — your Docker Hub username
-  - `DOCKERHUB_TOKEN` — Docker Hub access token (create at hub.docker.com → Account → Security → New Access Token)
+  - `DOCKERHUB_USERNAME` — Docker Hub username
+  - `DOCKERHUB_TOKEN` — Docker Hub access token
 
 - Triggering the workflow: push to `main`, create a tag (`v*`) or run the workflow manually from Actions.
 
@@ -83,4 +83,5 @@ docker run -p 3000:3000 lucaem/rdw-api:tagname
 - If you need shared caching across instances, set up Redis and we can add Redis support.
 
 ## License
+
 This project currently has no license. Expect one in the future.
