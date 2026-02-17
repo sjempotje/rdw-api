@@ -6,34 +6,23 @@ export const LICENCED_VEHICLES_BODY_SPECIFICS = "https://opendata.rdw.nl/resourc
 export const LICENCED_VEHICLES_VEHICLE_CLASS = "https://opendata.rdw.nl/resource/kmfi-hrps.json"
 
 import type { VehicleData, RdwClient } from './types.js'
+import { InMemoryCache } from './cache.js'
+import { getConfig } from './config.js'
 
-const DEFAULT_TTL_MS = Number(process.env.RDW_CACHE_TTL_MS) || 5 * 60 * 1000 // 5 minutes
+const cfg = getConfig()
 
-type CacheEntry = { expires: number; value: unknown }
-
+/**
+ * Create an RDW client that fetches RDW Socrata datasets and caches results in-memory.
+ */
 export function createRdwClient(options: { ttlMs?: number } = {}): RdwClient {
-  const ttlMs = options.ttlMs ?? DEFAULT_TTL_MS
-  const cache = new Map<string, CacheEntry>()
+  const ttlMs = options.ttlMs ?? cfg.rdwCacheTtlMs
+  const cache = new InMemoryCache<unknown[]>(ttlMs)
 
-  const getCached = <T>(key: string): T | undefined => {
-    const e = cache.get(key)
-    if (!e) return undefined
-    if (Date.now() > e.expires) {
-      cache.delete(key)
-      return undefined
-    }
-    return e.value as T
-  }
-
-  const setCached = (key: string, value: unknown, ms = ttlMs) => {
-    cache.set(key, { value, expires: Date.now() + ms })
-  }
-
-  const cachedFetch = async <T>(key: string, fetcher: () => Promise<T>, ms = ttlMs) => {
-    const hit = getCached<T>(key)
+  const cachedFetch = async <T>(key: string, fetcher: () => Promise<T>): Promise<T> => {
+    const hit = cache.get(key) as T | undefined
     if (hit !== undefined) return hit
     const val = await fetcher()
-    setCached(key, val, ms)
+    cache.set(key, val as unknown as unknown[])
     return val
   }
 

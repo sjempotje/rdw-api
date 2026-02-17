@@ -2,6 +2,7 @@ import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { createRdwClient, testRdwClient } from './rdw.js'
+import { getConfig } from './config.js'
 import {
   rateLimiterMiddleware,
   loggerMiddleware,
@@ -10,8 +11,9 @@ import {
 } from './middlewares.js'
 import { handleRoot, handleKentekenLookup, handleHealthCheck, handleKentekenAxles, handleKentekenFuel, handleKentekenBody, handleKentekenVehicleClass } from './handlers.js'
 
+const cfg = getConfig()
 const app = new Hono()
-const rdw = createRdwClient()
+const rdw = createRdwClient({ ttlMs: cfg.rdwCacheTtlMs })
 
 // Global middlewares
 app.use('*', loggerMiddleware)

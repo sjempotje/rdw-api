@@ -46,6 +46,36 @@ pnpm install
 ## Configuration
 
 - RDW cache TTL (milliseconds): set `RDW_CACHE_TTL_MS` environment variable (default 300000 = 5 minutes)
+- Server bind address: set `HOST` (default `0.0.0.0`)
+- Port: set `PORT` (default `3000`)
+
+## Container images & CI
+
+- CI workflow: `.github/workflows/build-and-push-images.yml` builds and publishes multi-arch images.
+- Published registries:
+  - GitHub Container Registry: `ghcr.io/<owner>/<repo>`
+  - Docker Hub: `docker.io/lucaem/rdw-api`
+
+- Required repository secrets (for Docker Hub push):
+  - `DOCKERHUB_USERNAME` — your Docker Hub username
+  - `DOCKERHUB_TOKEN` — Docker Hub access token (create at hub.docker.com → Account → Security → New Access Token)
+
+- Triggering the workflow: push to `main`, create a tag (`v*`) or run the workflow manually from Actions.
+
+- Manual build & push (example):
+
+```bash
+docker build -t lucaem/rdw-api:tagname .
+docker login --username lucaem
+docker push lucaem/rdw-api:tagname
+```
+
+- Run the container locally:
+
+```bash
+docker run -p 3000:3000 lucaem/rdw-api:tagname
+# then visit http://localhost:3000/health
+```
 
 ## Notes
 
