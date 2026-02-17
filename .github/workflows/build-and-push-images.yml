@@ -146,3 +146,13 @@ jobs:
           docker buildx imagetools create --tag docker.io/lucaem/rdw-api:latest \
             docker.io/lucaem/rdw-api:amd64 \
             docker.io/lucaem/rdw-api:arm64
+
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: lucaem/rdw-api
+          short-description: ${{ github.event.repository.description }}
+          enable-url-completion: true
+          readme-filepath: ./README.md
