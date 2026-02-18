@@ -133,12 +133,3 @@ jobs:
             ${{ env.DOCKERHUB_IMAGE }}:amd64 \
             ${{ env.DOCKERHUB_IMAGE }}:arm64
 
-      - name: Attach SBOM + SLSA provenance (BuildKit)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: false
-          provenance: mode=max
-          sbom: true
