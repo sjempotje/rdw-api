@@ -51,14 +51,14 @@ pnpm install
 
 ## Container images & CI
 
-- CI workflow: `.github/workflows/build-and-push-images.yml` builds and publishes multi-arch images, **generates a CycloneDX SBOM**, and **attaches a keyless in‑toto provenance attestation** to each pushed image (`ghcr.io/<owner>/rdw-api:tag`).
+- CI workflow: `.github/workflows/sbom-provenance.yml` builds and publishes multi-arch images using `docker buildx --sbom=true --provenance=true` — buildx produces and attaches a CycloneDX SBOM and a keyless in‑toto provenance attestation to each pushed image (`ghcr.io/<owner>/rdw-api:tag`).
 - Published registries:
   - GitHub Container Registry: `ghcr.io/<owner>/rdw-api`
   - Docker Hub: `docker.io/lucaem/rdw-api`
 
 - Supply-chain guarantees added by CI:
-  - **SBOM** (CycloneDX JSON) — produced with `syft` and attached to the image.
-  - **Provenance** — keyless in‑toto attestation created with `cosign` (records builder, git ref, materials).
+  - **SBOM** (CycloneDX JSON) — produced during the build (`docker buildx --sbom=true`) and additionally verifiable with `syft`.
+  - **Provenance** — produced during the build (`docker buildx --provenance=true`) and recorded/verified as a keyless in‑toto attestation with `cosign` (records builder, git ref, materials).
 
 - Required repository permissions for CI workflow:
   - `id-token: write` (OIDC for keyless attestations)
