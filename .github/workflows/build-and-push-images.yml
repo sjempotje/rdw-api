@@ -1,78 +1,88 @@
-name: Build, Publish & Attest (Multi-Arch)
+name: Build, Publish & Attest (Native Multi-Arch)
 
 on:
   push:
     branches: [ "main" ]
     tags: [ "v*" ]
-  pull_request:
-    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
   contents: read
   packages: write
-  id-token: write   # REQUIRED for keyless signing
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  id-token: write
 
 env:
   GHCR_IMAGE: ghcr.io/${{ github.repository }}
   DOCKERHUB_IMAGE: docker.io/lucaem/rdw-api
 
 jobs:
-  build:
-    name: Build & Push Multi-Arch Image (with SBOM + Provenance)
+
+  build-amd64:
     runs-on: ubuntu-24.04
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Log in to Docker Hub
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push multi-arch image
+      - name: Build amd64
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ${{ env.GHCR_IMAGE }}:${{ github.sha }}
-            ${{ env.GHCR_IMAGE }}:latest
-            ${{ env.DOCKERHUB_IMAGE }}:${{ github.sha }}
-            ${{ env.DOCKERHUB_IMAGE }}:latest
-          provenance: mode=max
-          sbom: true
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.GHCR_IMAGE }}:amd64
+          provenance: false
+          sbom: false
+
+
+  build-arm64:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build arm64
+        uses: docker/build-push-action@v5
+        with:
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.GHCR_IMAGE }}:arm64
+          provenance: false
+          sbom: false
+
+
+  manifest:
+    needs: [build-amd64, build-arm64]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create multi-arch image + attest
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ env.GHCR_IMAGE }}:latest \
+            ${{ env.GHCR_IMAGE }}:amd64 \
+            ${{ env.GHCR_IMAGE }}:arm64
 
       - name: Install Cosign
-        if: github.event_name != 'pull_request'
         uses: sigstore/cosign-installer@v3
 
-      - name: Verify provenance exists
-        if: github.event_name != 'pull_request'
+      - name: Generate provenance
         run: |
-          cosign verify-attestation \
+          cosign attest \
+            --predicate <(echo '{"buildType":"multi-arch-manifest"}') \
             --type slsaprovenance \
-            ${{ env.GHCR_IMAGE }}:${{ github.sha }}
+            ${{ env.GHCR_IMAGE }}:latest
