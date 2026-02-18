@@ -18,6 +18,7 @@ RUN pnpm run build
 # Production stage
 FROM node:alpine
 
+# Run application as a non-root user for improved security
 WORKDIR /app
 
 # Copy package files
@@ -29,8 +30,14 @@ RUN npm install -g pnpm && pnpm install --prod --frozen-lockfile
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
+# Ensure app directory (including node_modules) is owned by the non-root user
+RUN chown -R node:node /app
+
+# Switch to the non-root 'node' user (present in official Node images)
+USER node
+
 # Expose the application port
 EXPOSE 3000
 
-# Run the application
+# Run the application as non-root user
 CMD ["node", "dist/index.js"]

@@ -51,14 +51,22 @@ pnpm install
 
 ## Container images & CI
 
-- CI workflow: `.github/workflows/build-and-push-images.yml` builds and publishes multi-arch images.
+- CI workflow: `.github/workflows/build-and-push-images.yml` builds and publishes multi-arch images, **generates a CycloneDX SBOM**, and **attaches a keyless in‑toto provenance attestation** to each pushed image (`ghcr.io/<owner>/rdw-api:tag`).
 - Published registries:
-  - GitHub Container Registry: `ghcr.io/<owner>/<repo>`
+  - GitHub Container Registry: `ghcr.io/<owner>/rdw-api`
   - Docker Hub: `docker.io/lucaem/rdw-api`
 
-- Required repository secrets (for Docker Hub push):
-  - `DOCKERHUB_USERNAME` — Docker Hub username
-  - `DOCKERHUB_TOKEN` — Docker Hub access token
+- Supply-chain guarantees added by CI:
+  - **SBOM** (CycloneDX JSON) — produced with `syft` and attached to the image.
+  - **Provenance** — keyless in‑toto attestation created with `cosign` (records builder, git ref, materials).
+
+- Required repository permissions for CI workflow:
+  - `id-token: write` (OIDC for keyless attestations)
+  - `packages: write` (push to GHCR)
+
+- Required repository secrets (for Docker Hub push only):
+  - `DOCKERHUB_USERNAME`
+  - `DOCKERHUB_TOKEN`
 
 - Triggering the workflow: push to `main`, create a tag (`v*`) or run the workflow manually from Actions.
 
