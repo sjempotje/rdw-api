@@ -54,8 +54,8 @@ jobs:
           tags: |
             ${{ env.GHCR_IMAGE }}:amd64
             ${{ env.DOCKERHUB_IMAGE }}:amd64
-          provenance: false
-          sbom: false
+          provenance: mode=max
+          sbom: true
 
 
   build-arm64:
@@ -91,8 +91,8 @@ jobs:
           tags: |
             ${{ env.GHCR_IMAGE }}:arm64
             ${{ env.DOCKERHUB_IMAGE }}:arm64
-          provenance: false
-          sbom: false
+          provenance: mode=max
+          sbom: true
 
 
   manifest:
