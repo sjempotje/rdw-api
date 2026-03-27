@@ -48,3 +48,103 @@ export const corsMiddleware: MiddlewareHandler = async (c, next) => {
   c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
   c.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 }
+
+const blockedIps = new Map<string, boolean>()
+
+function getClientIp(c: any): string {
+  const header = (name: string) => {
+    try {
+      return c.req.header?.(name) || c.req.headers?.get?.(name)
+    } catch {
+      return undefined
+    }
+  }
+
+  const maybeIp =
+    header('x-forwarded-for') ||
+    header('x-real-ip') ||
+    c.req.ip ||
+    c.req.raw?.socket?.remoteAddress ||
+    c.req.raw?.connection?.remoteAddress ||
+    'unknown'
+
+  if (typeof maybeIp === 'string') {
+    return maybeIp.split(',')[0].trim()
+  }
+
+  return 'unknown'
+}
+
+function isIpBlocked(ip: string): boolean {
+  return blockedIps.has(ip)
+}
+
+function blockIp(ip: string): void {
+  if (ip) {
+    blockedIps.set(ip, true)
+  }
+}
+
+export const hackerDetectionMiddleware: MiddlewareHandler = async (c, next) => {
+  const path = c.req.path.toLowerCase()
+  const ua = (c.req.header('user-agent') || '').toLowerCase()
+  const clientIp = getClientIp(c)
+
+  if (isIpBlocked(clientIp)) {
+    console.warn(`Blocked request from blocked IP ${clientIp} path=${path} ua=${ua}`)
+    return c.text('Forbidden', 403)
+  }
+
+  const blacklistedPaths = [
+    '/wp-admin',
+    '/wp-login.php',
+    '/xmlrpc.php',
+    '/phpmyadmin',
+    '/pma',
+    '/adminer',
+    '/solr/admin',
+    '/hudson',
+    '/jenkins',
+    '/.env',
+    '/.git',
+    '/.htaccess',
+    '/etc/passwd',
+    '/proc/self/environ',
+  ]
+
+  const blacklistedTokens = [
+    '.env',
+    '.git',
+    '.htaccess',
+    'etc/passwd',
+    'proc/self/environ',
+  ]
+
+  const blacklistedAgents = [
+    'sqlmap',
+    'nikto',
+    'acunetix',
+    'dirbuster',
+    'nmap',
+    'masscan',
+    'python-requests',
+    'libwww-perl',
+    'curl',
+    'wget',
+    'scanner',
+    'attack',
+  ]
+
+  const isProbableProbe =
+    blacklistedPaths.some((p) => path === p || path.startsWith(p + '/')) ||
+    blacklistedTokens.some((token) => path.includes(token)) ||
+    blacklistedAgents.some((item) => ua.includes(item))
+
+  if (isProbableProbe) {
+    console.warn(`Blocked probe request from ${clientIp} path=${path} ua=${ua}`)
+    blockIp(clientIp)
+    return c.text('Not Found', 404)
+  }
+
+  await next()
+}

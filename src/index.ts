@@ -8,6 +8,7 @@ import {
   loggerMiddleware,
   rdwMiddleware,
   corsMiddleware,
+  hackerDetectionMiddleware,
 } from './middlewares.js'
 import {
   handleRoot,
@@ -26,8 +27,17 @@ const rdw = createRdwClient({ ttlMs: cfg.rdwCacheTtlMs })
 // Global middlewares
 app.use('*', loggerMiddleware)
 app.use('*', corsMiddleware)
+app.use('*', hackerDetectionMiddleware)
 app.use('*', rdwMiddleware(rdw))
 app.use('*', rateLimiterMiddleware)
+
+app.get('/robots.txt', (c) =>
+  c.text(
+    `User-agent: *\nDisallow: /api\nDisallow: /health\nAllow: /$\n`,
+    200,
+    { 'Content-Type': 'text/plain' }
+  )
+)
 
 // Routes
 app.get('/', handleRoot)

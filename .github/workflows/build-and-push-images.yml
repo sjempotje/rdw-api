@@ -121,7 +121,6 @@ jobs:
         run: |
           docker buildx imagetools create \
             --tag ${{ env.GHCR_IMAGE }}:latest \
-            --tag ${{ env.GHCR_IMAGE }}:${{ github.sha }} \
             ${{ env.GHCR_IMAGE }}:amd64 \
             ${{ env.GHCR_IMAGE }}:arm64
 
@@ -129,7 +128,6 @@ jobs:
         run: |
           docker buildx imagetools create \
             --tag ${{ env.DOCKERHUB_IMAGE }}:latest \
-            --tag ${{ env.DOCKERHUB_IMAGE }}:${{ github.sha }} \
             ${{ env.DOCKERHUB_IMAGE }}:amd64 \
             ${{ env.DOCKERHUB_IMAGE }}:arm64
 
